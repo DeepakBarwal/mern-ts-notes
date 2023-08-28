@@ -1,18 +1,15 @@
 import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
-import NoteModel from './models/note';
+import morgan from 'morgan';
+import apiRoutes from './routes/index';
 
 const app = express();
 
-app.get("/", async (req, res, next) => {
-    try {
-        // throw new Error('Bazzinga!');
-        const notes = await NoteModel.find().exec();
-        res.status(200).json(notes);
-    } catch (error) {
-        next(error)
-    }
-});
+app.use(morgan("dev"));
+
+app.use(express.json());
+
+app.use('/api', apiRoutes);
 
 app.use((req, res, next) => {
     next(new Error('Endpoint not found!'));
