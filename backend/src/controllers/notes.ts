@@ -54,3 +54,63 @@ export const createNote: RequestHandler<unknown, unknown, ICreateNoteBody, unkno
         next(error);
     }
 }
+
+interface IUpdateNoteParams {
+    noteId: string;
+}
+
+interface IUpdateNoteBody {
+    title?: string;
+    text?: string;
+}
+
+export const updateNote: RequestHandler<IUpdateNoteParams, unknown, IUpdateNoteBody, unknown> = async (req, res, next) => {
+    const { noteId } = req.params;
+    const { title: newTitle, text: newText } = req.body;
+
+    try {
+        if (!mongoose.isValidObjectId(noteId)) {
+            throw createHttpError(400, 'Invalid note id');
+        }
+
+        if (!newTitle) {
+            throw createHttpError(400, 'Note must have a title');
+        }
+
+        const note = await NoteModel.findById(noteId).exec();
+
+        if (!note) {
+            throw createHttpError(404, 'Note not found');
+        }
+
+        note.title = newTitle;
+        newText && (note.text = newText);
+
+        const updatedNote = await note.save();
+
+        res.status(200).json(updatedNote);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const deleteNote: RequestHandler = async (req, res, next) => {
+    const { noteId } = req.params;
+    try {
+        if (!mongoose.isValidObjectId(noteId)) {
+            throw createHttpError(400, 'Invalid note id');
+        }
+
+        const note = await NoteModel.findById(noteId).exec();
+
+        if (!note) {
+            throw createHttpError(404, 'Note not found');
+        }
+
+        await note.deleteOne();
+
+        res.sendStatus(204);
+    } catch (error) {
+        next(error);
+    }
+}
